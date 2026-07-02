@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escudo Digital: Navegación Segura</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f8ff; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        #game-container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            max-width: 500px; 
+            text-align: center; 
+        }
+        h1 { color: #2c3e50; }
+        .btn { 
+            background-color: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            margin: 10px 0; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: 0.3s; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        .btn:hover { background-color: #2980b9; }
+        #feedback { 
+            margin-top: 20px; 
+            font-weight: bold; 
+            min-height: 60px; 
+        }
+        .correct { color: #27ae60; }
+        .incorrect { color: #e74c3c; }
+        .score-board {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>🛡️ Escudo Digital</h1>
+        <p id="scenario">Cargando situación...</p>
+        <div id="options"></div>
+        <p id="feedback"></p>
+        <div class="score-board">Puntuación: <span id="score">0</span></div>
+    </div>
+
+    <script>
+        const scenarios = [
+            { 
+                q: "Recibes un correo urgente de tu banco pidiendo que hagas clic en un enlace para verificar tu contraseña. ¿Qué haces?", 
+                options: [
+                    {text: "Hacer clic y poner mi contraseña para evitar bloqueos.", safe: false}, 
+                    {text: "Ignorar el correo y contactar al banco por mi cuenta.", safe: true}
+                ], 
+                reason: "Los bancos nunca piden que verifiques tu contraseña a través de un enlace por correo electrónico (esto se conoce como Phishing)." 
+            },
+            { 
+                q: "Una página web emergente parpadea diciendo que eres el visitante 1,000,000 y ganaste un teléfono. Solo debes pagar el envío.", 
+                options: [
+                    {text: "Ingresar los datos de mi tarjeta para recibir el premio.", safe: false}, 
+                    {text: "Cerrar la pestaña inmediatamente.", safe: true}
+                ], 
+                reason: "Si parece demasiado bueno para ser verdad, casi siempre es una estafa para robar tus datos financieros." 
+            },
+            { 
+                q: "Estás creando una contraseña para tu cuenta de correo principal. ¿Cuál eliges?", 
+                options: [
+                    {text: "El nombre de mi perro y mi año de nacimiento (Ej: Toby1995).", safe: false}, 
+                    {text: "Una frase larga con números y caracteres especiales (Ej: M1.perro.L3.gusta.c0rr3r!).", safe: true}
+                ], 
+                reason: "Las contraseñas predecibles se adivinan en segundos mediante ataques de fuerza bruta. Usa combinaciones largas y variadas." 
+            }
+        ];
+        
+        let current = 0;
+        let score = 0;
+        
+        const scenarioEl = document.getElementById("scenario");
+        const optionsEl = document.getElementById("options");
+        const feedbackEl = document.getElementById("feedback");
+        const scoreEl = document.getElementById("score");
+
+        function loadScenario() {
+            if(current >= scenarios.length) {
+                scenarioEl.innerHTML = "¡Juego terminado! Gracias por jugar Escudo Digital.";
+                optionsEl.innerHTML = "";
+                feedbackEl.innerHTML = "Tu puntuación final refleja qué tan preparado estás para navegar con seguridad.";
+                return;
+            }
+            
+            feedbackEl.innerHTML = "";
+            let s = scenarios[current];
+            scenarioEl.innerHTML = `<strong>Situación ${current + 1}:</strong> ${s.q}`;
+            optionsEl.innerHTML = "";
+            
+            s.options.forEach(opt => {
+                let btn = document.createElement("button");
+                btn.className = "btn";
+                btn.innerHTML = opt.text;
+                btn.onclick = () => checkAnswer(opt.safe, s.reason);
+                optionsEl.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(safe, reason) {
+            // Deshabilitar botones temporalmente
+            const buttons = optionsEl.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            if(safe) { 
+                score += 100; 
+                feedbackEl.innerHTML = `<span class='correct'>¡Decisión Segura!</span><br><br>${reason}`; 
+            } else { 
+                feedbackEl.innerHTML = `<span class='incorrect'>¡Alerta de Riesgo!</span><br><br>${reason}`; 
+            }
+            
+            scoreEl.innerHTML = score;
+            current++;
+            
+            // Esperar 4 segundos antes de pasar a la siguiente pregunta
+            setTimeout(loadScenario, 4000);
+        }
+
+        // Iniciar el juego
+        loadScenario();
+    </script>
+</body>
+</html>
