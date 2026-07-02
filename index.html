@@ -3,143 +3,772 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escudo Digital: Navegación Segura</title>
+    <title>Escudo Digital: Cyber Patrol</title>
+    <!-- Tailwind CSS para el diseño modular moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter para legibilidad y Orbitron para un look tecnológico -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f0f8ff; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #0b1528 0%, #030712 100%);
         }
-        #game-container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            max-width: 500px; 
-            text-align: center; 
+        .cyber-font {
+            font-family: 'Orbitron', sans-serif;
         }
-        h1 { color: #2c3e50; }
-        .btn { 
-            background-color: #3498db; 
-            color: white; 
-            border: none; 
-            padding: 12px 20px; 
-            margin: 10px 0; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            transition: 0.3s; 
-            width: 100%; 
-            box-sizing: border-box; 
+        /* Efecto de cristalera cibernética */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.1);
         }
-        .btn:hover { background-color: #2980b9; }
-        #feedback { 
-            margin-top: 20px; 
-            font-weight: bold; 
-            min-height: 60px; 
+        /* Brillo de neón dinámico */
+        .neon-border-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            border-color: rgba(6, 182, 212, 1);
         }
-        .correct { color: #27ae60; }
-        .incorrect { color: #e74c3c; }
-        .score-board {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
-            color: #34495e;
+        .neon-border-red {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            border-color: rgba(239, 68, 68, 1);
+        }
+        /* Animación de escaneo */
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .scan-line::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to bottom, transparent, #06b6d4, transparent);
+            animation: scan 6s linear infinite;
+            left: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+        /* Animación para sacudir pantalla en error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake-effect {
+            animation: shake 0.4s ease-in-out;
+        }
+        /* Canvas de fondo para partículas */
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
         }
     </style>
 </head>
-<body>
-    <div id="game-container">
-        <h1>🛡️ Escudo Digital</h1>
-        <p id="scenario">Cargando situación...</p>
-        <div id="options"></div>
-        <p id="feedback"></p>
-        <div class="score-board">Puntuación: <span id="score">0</span></div>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-x-hidden text-slate-100 relative">
+
+    <!-- Canvas para efectos de celebración de aciertos -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div id="game-card" class="relative w-full max-w-4xl glass-panel rounded-2xl overflow-hidden p-6 md:p-8 transition-all duration-500 z-10">
+        
+        <!-- Línea Decorativa Superior -->
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-emerald-500"></div>
+
+        <!-- Cabecera de Estado / HUD -->
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-950/50 rounded-lg border border-cyan-500/30">
+                    <span class="text-2xl">🛡️</span>
+                </div>
+                <div>
+                    <h1 class="cyber-font text-lg md:text-xl font-bold tracking-wider text-cyan-400">ESCUDO DIGITAL</h1>
+                    <p class="text-xs text-slate-400 tracking-widest">NIVEL: AGENTE DE PATRULLA</p>
+                </div>
+            </div>
+            
+            <!-- Sonido y Controles de Puntos -->
+            <div class="flex items-center gap-3">
+                <button id="sound-btn" onclick="toggleSound()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition" title="Alternar Sonido">
+                    <span id="sound-icon">🔊</span>
+                </button>
+                <div class="bg-slate-900/80 px-4 py-1.5 rounded-lg border border-slate-800 flex items-center gap-2">
+                    <span class="text-xs text-slate-400 font-bold cyber-font">PUNTOS:</span>
+                    <span id="score-val" class="cyber-font text-emerald-400 font-black text-lg">0000</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- Panel Izquierdo: Mascota y Estado del Escudo -->
+            <div class="lg:col-span-4 flex flex-col items-center justify-between bg-slate-950/40 p-4 rounded-xl border border-slate-800/80 min-h-[300px]">
+                
+                <!-- Escudo de Integridad -->
+                <div class="w-full mb-4">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="cyber-font text-xs text-slate-400 tracking-wider font-semibold">INTEGRIDAD DEL ESCUDO</span>
+                        <span id="shield-txt" class="cyber-font text-xs text-cyan-400 font-bold">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="shield-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Mascota Robótica Interactiva (Aegis) -->
+                <div class="relative w-40 h-40 my-2 flex items-center justify-center">
+                    <!-- Efecto de Aura / Brillo de Fondo -->
+                    <div id="companion-aura" class="absolute inset-0 bg-cyan-500/10 rounded-full blur-xl transition-all duration-500"></div>
+                    
+                    <!-- SVG del Robot AEGIS -->
+                    <svg id="aegis-bot" class="w-32 h-32 relative z-10 transition-transform duration-300 hover:scale-105" viewBox="0 0 100 100">
+                        <!-- Cuerpo / Chasis -->
+                        <rect x="25" y="40" width="50" height="40" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
+                        <rect x="35" y="48" width="30" height="24" rx="5" fill="#0f172a" stroke="#0284c7" stroke-width="2" />
+                        
+                        <!-- Cabeza -->
+                        <rect x="30" y="15" width="40" height="22" rx="11" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
+                        
+                        <!-- Orejas / Antenas -->
+                        <line x1="26" y1="26" x2="18" y2="26" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+                        <line x1="74" y1="26" x2="82" y2="26" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+                        <circle cx="16" cy="26" r="3" fill="#06b6d4" />
+                        <circle cx="84" cy="26" r="3" fill="#06b6d4" />
+                        
+                        <!-- Ojos Dinámicos (Cambian por Estado en JavaScript) -->
+                        <g id="eyes-neutral">
+                            <ellipse cx="42" cy="26" rx="5" ry="3" fill="#06b6d4" />
+                            <ellipse cx="58" cy="26" rx="5" ry="3" fill="#06b6d4" />
+                        </g>
+                        <g id="eyes-happy" class="hidden">
+                            <path d="M37 28 Q42 22 47 28" stroke="#10b981" stroke-width="3.5" fill="none" stroke-linecap="round" />
+                            <path d="M53 28 Q58 22 63 28" stroke="#10b981" stroke-width="3.5" fill="none" stroke-linecap="round" />
+                        </g>
+                        <g id="eyes-danger" class="hidden">
+                            <path d="M37 23 L47 27 M47 23 L37 27" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" />
+                            <path d="M53 23 L63 27 M63 23 L53 27" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" />
+                        </g>
+
+                        <!-- Boca de luces led -->
+                        <path id="mouth" d="M42 33 L58 33" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <div class="text-center w-full px-2">
+                    <p class="cyber-font text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ciber-Asistente</p>
+                    <p id="bot-bubble" class="text-xs font-semibold text-cyan-300 italic">"¡Saludos Patrullero! Iniciemos el escaneo de red."</p>
+                </div>
+            </div>
+
+            <!-- Panel Derecho: Interacciones y Simuladores -->
+            <div class="lg:col-span-8 flex flex-col justify-between min-h-[350px]">
+                
+                <!-- Pantalla Inicial / Bienvenida -->
+                <div id="start-screen" class="flex flex-col items-center justify-center py-8 text-center h-full">
+                    <div class="relative mb-6">
+                        <div class="absolute -inset-1 rounded-full bg-cyan-500/20 blur-xl"></div>
+                        <span class="text-6xl relative block animate-pulse">🛰️</span>
+                    </div>
+                    <h2 class="cyber-font text-xl md:text-2xl font-black text-slate-100 tracking-wide mb-3">¿ES SEGURO TU CAMINO EN INTERNET?</h2>
+                    <p class="text-slate-400 text-sm max-w-md mb-8 leading-relaxed">
+                        Toma las decisiones de seguridad correctas ante amenazas y escenarios interactivos reales simulados en pantalla. ¡Mantén el escudo en alto!
+                    </p>
+                    <button onclick="startGame()" class="cyber-font w-full max-w-sm py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-base text-slate-950 uppercase tracking-wider hover:from-cyan-400 hover:to-blue-500 transition duration-300 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+                        Iniciar Patrullaje
+                    </button>
+                </div>
+
+                <!-- Escenario en Juego -->
+                <div id="gameplay-screen" class="hidden flex flex-col justify-between h-full">
+                    <div>
+                        <!-- Nivel/Progreso -->
+                        <div class="flex justify-between text-[11px] text-slate-500 mb-2 border-b border-slate-800 pb-1.5">
+                            <span id="level-indicator" class="cyber-font tracking-wider text-cyan-500/80 font-bold">CASO 1 / 5</span>
+                            <span id="combo-indicator" class="cyber-font text-yellow-500/80 font-bold">COMBO X1</span>
+                        </div>
+                        
+                        <!-- Pregunta/Situación -->
+                        <h3 id="question-text" class="text-sm md:text-base font-bold leading-relaxed mb-4 text-slate-200">
+                            Detectando amenaza de seguridad...
+                        </h3>
+
+                        <!-- Simulador Interactivo de Contexto (Se inyecta dinámicamente) -->
+                        <div id="context-simulator" class="mb-5 bg-slate-900/60 p-4 rounded-xl border border-slate-800 relative">
+                            <!-- Inyección dinámica según la pregunta -->
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción / Decisiones -->
+                    <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                        <!-- Opciones Dinámicas -->
+                    </div>
+                </div>
+
+                <!-- Pantalla de Retroalimentación -->
+                <div id="feedback-screen" class="hidden flex flex-col justify-between h-full">
+                    <div class="text-center py-2">
+                        <div id="feedback-status-badge" class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold cyber-font mb-3">
+                            <!-- Correcto o Incorrecto -->
+                        </div>
+                        <h3 id="feedback-title" class="text-lg font-black mb-3 text-slate-100"></h3>
+                        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-left">
+                            <h4 class="cyber-font text-[10px] text-cyan-400 tracking-wider mb-1.5 uppercase font-bold">Análisis del Ciber-Asistente:</h4>
+                            <p id="feedback-desc" class="text-xs md:text-sm text-slate-300 leading-relaxed"></p>
+                        </div>
+                    </div>
+                    <button onclick="nextLevel()" class="cyber-font w-full py-3 mt-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-400 hover:text-cyan-300 font-bold tracking-widest rounded-xl uppercase transition duration-200 text-sm">
+                        Siguiente Amenaza
+                    </button>
+                </div>
+
+                <!-- Pantalla de Resultados -->
+                <div id="results-screen" class="hidden flex flex-col items-center justify-center text-center py-6 h-full">
+                    <div id="trophy-badge" class="text-6xl mb-4">🏆</div>
+                    <h2 id="results-title" class="cyber-font text-xl md:text-2xl font-extrabold tracking-wide mb-2">ANÁLISIS DE PATRULLA COMPLETO</h2>
+                    <p id="ranking-title" class="cyber-font text-cyan-400 font-bold text-xs tracking-widest mb-6">RANGO: AGENTE DE ÉLITE</p>
+                    
+                    <!-- Tarjeta de Estadísticas -->
+                    <div class="grid grid-cols-2 gap-4 w-full max-w-sm mb-8">
+                        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-center">
+                            <p class="text-[10px] text-slate-500 font-semibold cyber-font">PUNTUACIÓN</p>
+                            <p id="final-score" class="text-xl font-black text-emerald-400 cyber-font mt-1">0000</p>
+                        </div>
+                        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-center">
+                            <p class="text-[10px] text-slate-500 font-semibold cyber-font">ESCUDO FINAL</p>
+                            <p id="final-shield" class="text-xl font-black text-cyan-400 cyber-font mt-1">100%</p>
+                        </div>
+                    </div>
+
+                    <button onclick="resetGame()" class="cyber-font w-full max-w-sm py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-sm text-slate-950 uppercase tracking-widest hover:from-cyan-400 hover:to-blue-500 transition duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                        Reiniciar Simulación
+                    </button>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <script>
-        const scenarios = [
-            { 
-                q: "Recibes un correo urgente de tu banco pidiendo que hagas clic en un enlace para verificar tu contraseña. ¿Qué haces?", 
+        // --- MOTOR DE SONIDO SINTETIZADO (Web Audio API) ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playBeep(freq, duration, type = 'sine') {
+                if (!this.enabled) return;
+                this.init();
+                
+                let osc = this.ctx.createOscillator();
+                let gainNode = this.ctx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+                
+                osc.connect(gainNode);
+                gainNode.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playCorrect() {
+                this.playBeep(440, 0.08, 'sine'); // La4
+                setTimeout(() => this.playBeep(554.37, 0.08, 'sine'), 60); // Do#5
+                setTimeout(() => this.playBeep(659.25, 0.15, 'sine'), 120); // Mi5
+            }
+
+            playError() {
+                this.playBeep(180, 0.12, 'triangle'); 
+                setTimeout(() => this.playBeep(120, 0.25, 'triangle'), 90); 
+            }
+
+            playComplete() {
+                this.playBeep(523.25, 0.1, 'sine'); // Do5
+                setTimeout(() => this.playBeep(659.25, 0.1, 'sine'), 100); // Mi5
+                setTimeout(() => this.playBeep(783.99, 0.1, 'sine'), 200); // Sol5
+                setTimeout(() => this.playBeep(1046.50, 0.3, 'sine'), 300); // Do6
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        function toggleSound() {
+            sound.enabled = !sound.enabled;
+            document.getElementById('sound-icon').textContent = sound.enabled ? '🔊' : '🔇';
+        }
+
+        // --- SISTEMA DE PARTÍCULAS (Confeti Cibernético) ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 4 + 2;
+                this.speedX = Math.random() * 6 - 3;
+                this.speedY = Math.random() * -5 - 2;
+                this.color = color;
+                this.alpha = 1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += 0.1; // Gravedad suave
+                this.alpha -= 0.015;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function triggerCelebration() {
+            const colors = ['#06b6d4', '#10b981', '#3b82f6', '#f59e0b'];
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(window.innerWidth / 2, window.innerHeight / 2 + 100, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // --- DATASET DE ESCENARIOS INTERACTIVOS ---
+        const SCENARIOS = [
+            {
+                id: 1,
+                question: "Recibes un correo electrónico urgente que aparenta ser de tu entidad bancaria. Te alerta de un bloqueo de cuenta inminente. ¿Cuál es tu protocolo de acción?",
                 options: [
-                    {text: "Hacer clic y poner mi contraseña para evitar bloqueos.", safe: false}, 
-                    {text: "Ignorar el correo y contactar al banco por mi cuenta.", safe: true}
-                ], 
-                reason: "Los bancos nunca piden que verifiques tu contraseña a través de un enlace por correo electrónico (esto se conoce como Phishing)." 
+                    { text: "Hacer clic en el enlace adjunto y rellenar las credenciales para evitar la penalización.", secure: false },
+                    { text: "Marcar como spam, eliminar el mensaje y llamar directamente al soporte oficial.", secure: true }
+                ],
+                reason: "Los bancos y servicios serios jamás solicitan contraseñas o enlaces urgentes de reajuste vía correo electrónico no autenticado. Este método es Phishing clásico.",
+                type: "email",
+                mockHTML: `
+                    <div class="border border-slate-700 rounded-lg p-3 text-[11px] font-mono bg-slate-950/80 text-slate-300">
+                        <div class="border-b border-slate-800 pb-2 mb-2 leading-relaxed">
+                            <span class="text-rose-400">De:</span> soporte@banco-verificar-seguridad.net<br>
+                            <span class="text-cyan-400">Asunto:</span> ¡ALERTA CRÍTICA! Cuenta inhabilitada temporalmente
+                        </div>
+                        <p class="text-slate-200 mt-2">
+                            Estimado usuario, detectamos accesos anómalos. Por favor verifique sus datos de ingreso pulsando el botón:
+                        </p>
+                        <div class="my-2.5 p-2 bg-rose-950/40 text-center rounded border border-rose-800 text-rose-300 font-bold tracking-wider animate-pulse cursor-pointer">
+                            ⚠️ ACCEDER AL PORTAL DE REINICIO
+                        </div>
+                    </div>
+                `
             },
-            { 
-                q: "Una página web emergente parpadea diciendo que eres el visitante 1,000,000 y ganaste un teléfono. Solo debes pagar el envío.", 
+            {
+                id: 2,
+                question: "Una pestaña del navegador lanza una alerta flotante bloqueando tu pantalla. Te felicita por ser el visitante del millón y te pide un pago mínimo de envío para tu premio.",
                 options: [
-                    {text: "Ingresar los datos de mi tarjeta para recibir el premio.", safe: false}, 
-                    {text: "Cerrar la pestaña inmediatamente.", safe: true}
-                ], 
-                reason: "Si parece demasiado bueno para ser verdad, casi siempre es una estafa para robar tus datos financieros." 
+                    { text: "Ingresar los datos mínimos de mi tarjeta bancaria para asegurar el envío rápido.", secure: false },
+                    { text: "Cerrar la pestaña usando el administrador de tareas o combinaciones de teclas (Alt+F4).", secure: true }
+                ],
+                reason: "Las felicitaciones de premios aleatorios de internet en pop-ups que solicitan transacciones inmediatas son cebos maliciosos orientados a capturar datos bancarios.",
+                type: "popup",
+                mockHTML: `
+                    <div class="bg-indigo-950/70 border-2 border-pink-500 rounded-xl p-4 text-center relative overflow-hidden">
+                        <div class="absolute top-0 right-2 text-[9px] text-pink-400 uppercase font-bold tracking-widest animate-pulse">ALERTA LIVE</div>
+                        <span class="text-3xl inline-block mb-1">🎁</span>
+                        <h4 class="text-pink-400 font-bold text-xs cyber-font">¡GANADOR DETECTADO!</h4>
+                        <p class="text-[10px] text-slate-300 mt-1 leading-relaxed">Eres el visitante del millón de hoy. Tu iPhone 16 Pro está reservado.</p>
+                        <div class="mt-2 text-xs bg-slate-950/60 py-1 px-3 inline-block rounded text-pink-300 font-mono font-bold">Tiempo restante: <span id="timer">01:59</span></div>
+                    </div>
+                `
             },
-            { 
-                q: "Estás creando una contraseña para tu cuenta de correo principal. ¿Cuál eliges?", 
+            {
+                id: 3,
+                question: "Para asegurar tus cuentas principales, necesitas formular una contraseña inmune a ataques de fuerza bruta automatizados. ¿Qué credencial implementas?",
                 options: [
-                    {text: "El nombre de mi perro y mi año de nacimiento (Ej: Toby1995).", safe: false}, 
-                    {text: "Una frase larga con números y caracteres especiales (Ej: M1.perro.L3.gusta.c0rr3r!).", safe: true}
-                ], 
-                reason: "Las contraseñas predecibles se adivinan en segundos mediante ataques de fuerza bruta. Usa combinaciones largas y variadas." 
+                    { text: "Usar contraseñas cómodas basadas en nombres o fechas fáciles de recordar (ej: Toby2012).", secure: false },
+                    { text: "Una frase combinada aleatoriamente con mayúsculas, símbolos y números (ej: !N3g0_p@tr0l_StR0nG#).", secure: true }
+                ],
+                reason: "Las contraseñas simples basadas en palabras del diccionario o fechas comunes son descifradas al instante. Las combinaciones largas y variadas son tu mejor escudo.",
+                type: "password",
+                mockHTML: `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                        <div class="bg-slate-950/80 p-2.5 rounded-lg border border-red-500/30">
+                            <span class="text-red-400 font-bold">Configuración A:</span>
+                            <p class="font-mono text-xs mt-1 text-slate-300">marcos1998</p>
+                            <div class="w-full bg-slate-900 h-1 rounded-full mt-2">
+                                <div class="bg-red-500 h-full w-1/4 rounded-full"></div>
+                            </div>
+                            <span class="text-[9px] text-slate-500 mt-1 block">Nivel de Seguridad: Crítico</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-2.5 rounded-lg border border-emerald-500/30">
+                            <span class="text-emerald-400 font-bold">Configuración B:</span>
+                            <p class="font-mono text-xs mt-1 text-slate-300">!M4rc0s_98_StR0nG#</p>
+                            <div class="w-full bg-slate-900 h-1 rounded-full mt-2">
+                                <div class="bg-emerald-500 h-full w-full rounded-full animate-pulse"></div>
+                            </div>
+                            <span class="text-[9px] text-emerald-400 mt-1 block">Nivel de Seguridad: Militar</span>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 4,
+                question: "Te encuentras en una cafetería pública y necesitas revisar tus estados financieros en tu dispositivo personal. ¿Cómo accedes a internet?",
+                options: [
+                    { text: "Conectarme a la red libre sin contraseña ('Cafeteria_Gratis') para guardar mis datos móviles.", secure: false },
+                    { text: "Utilizar mi plan de datos móviles o activar un servicio VPN de confianza antes de entrar.", secure: true }
+                ],
+                reason: "Las redes Wi-Fi públicas sin contraseña cifrada permiten la inyección o captura de paquetes de datos de terceros (ataques Man-in-the-Middle). Evita transacciones críticas en ellas.",
+                type: "wifi",
+                mockHTML: `
+                    <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-[11px] leading-relaxed">
+                        <p class="text-slate-400 font-mono mb-2">Puntos de acceso detectados:</p>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center p-2 bg-slate-900/50 rounded border border-red-500/20">
+                                <span class="flex items-center gap-1.5 text-slate-300">🔓 Red_Cafet_Abierta</span>
+                                <span class="text-red-400 font-bold text-[9px] uppercase">No Seguro</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-900/50 rounded border border-emerald-500/20">
+                                <span class="flex items-center gap-1.5 text-slate-300">🔒 Red_Oficial_Cifrada (WPA3)</span>
+                                <span class="text-emerald-400 font-bold text-[9px] uppercase">Protegido</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 5,
+                question: "Una ventana emergente salta en tu navegador alegando que tu suite de reproducción de multimedia está obsoleta y requiere instalar un ejecutable urgente.",
+                options: [
+                    { text: "Descargar el parche inmediato 'codec_update.exe' para asegurar la visualización de la web.", secure: false },
+                    { text: "Ignorar por completo la web y actualizar mis aplicaciones desde sus fuentes u tiendas oficiales.", secure: true }
+                ],
+                reason: "Las alertas espontáneas de instalación de complementos o códecs multimedia obsoletos suelen ocultar troyanos o ransomware. Los sistemas modernos se actualizan automáticamente.",
+                type: "update",
+                mockHTML: `
+                    <div class="bg-slate-950/80 border border-amber-500/40 rounded-lg p-3 text-[11px] leading-relaxed">
+                        <div class="flex items-center gap-2 text-amber-400 font-bold mb-1.5">
+                            <span>⚠️</span> ATENCIÓN DE SISTEMA
+                        </div>
+                        <p class="text-slate-300">
+                            Para poder seguir visualizando de manera correcta el contenido multimedia de esta página, instale el driver de aceleración gráfico de última versión.
+                        </p>
+                        <div class="mt-2 text-[9px] text-slate-500 italic">Nombre del archivo: driver_codec_full.exe (No firmado)</div>
+                    </div>
+                `
             }
         ];
-        
-        let current = 0;
+
+        // --- ESTADO DEL JUEGO ---
+        let currentScenarioIndex = 0;
         let score = 0;
-        
-        const scenarioEl = document.getElementById("scenario");
-        const optionsEl = document.getElementById("options");
-        const feedbackEl = document.getElementById("feedback");
-        const scoreEl = document.getElementById("score");
+        let shieldIntegrity = 100;
+        let comboMultiplier = 1;
+        let currentTimer = null;
+
+        // --- MANEJO DE VISTAS ---
+        const startScreen = document.getElementById('start-screen');
+        const gameplayScreen = document.getElementById('gameplay-screen');
+        const feedbackScreen = document.getElementById('feedback-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const gameCard = document.getElementById('game-card');
+
+        // Mascotas SVG
+        const botAegis = document.getElementById('aegis-bot');
+        const eyesNeutral = document.getElementById('eyes-neutral');
+        const eyesHappy = document.getElementById('eyes-happy');
+        const eyesDanger = document.getElementById('eyes-danger');
+        const botBubble = document.getElementById('bot-bubble');
+        const botAura = document.getElementById('companion-aura');
+
+        function setBotExpression(expression) {
+            eyesNeutral.classList.add('hidden');
+            eyesHappy.classList.add('hidden');
+            eyesDanger.classList.add('hidden');
+            
+            botAura.className = "absolute inset-0 rounded-full blur-xl transition-all duration-500";
+
+            if (expression === 'happy') {
+                eyesHappy.classList.remove('hidden');
+                botBubble.className = "text-xs font-semibold text-emerald-400 italic";
+                botAura.classList.add('bg-emerald-500/20');
+            } else if (expression === 'danger') {
+                eyesDanger.classList.remove('hidden');
+                botBubble.className = "text-xs font-semibold text-rose-400 italic";
+                botAura.classList.add('bg-rose-500/20');
+                // Efecto de sacudida visual por error
+                gameCard.classList.add('shake-effect', 'neon-border-red');
+                setTimeout(() => {
+                    gameCard.classList.remove('shake-effect', 'neon-border-red');
+                }, 400);
+            } else {
+                eyesNeutral.classList.remove('hidden');
+                botBubble.className = "text-xs font-semibold text-cyan-300 italic";
+                botAura.classList.add('bg-cyan-500/10');
+            }
+        }
+
+        function startGame() {
+            sound.init();
+            currentScenarioIndex = 0;
+            score = 0;
+            shieldIntegrity = 100;
+            comboMultiplier = 1;
+            
+            updateHUD();
+            setBotExpression('neutral');
+            botBubble.textContent = '"¡Sistemas listos! Detectando señales de amenazas..."';
+
+            startScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            feedbackScreen.classList.add('hidden');
+            gameplayScreen.classList.remove('hidden');
+
+            loadScenario();
+        }
+
+        function resetGame() {
+            startGame();
+        }
 
         function loadScenario() {
-            if(current >= scenarios.length) {
-                scenarioEl.innerHTML = "¡Juego terminado! Gracias por jugar Escudo Digital.";
-                optionsEl.innerHTML = "";
-                feedbackEl.innerHTML = "Tu puntuación final refleja qué tan preparado estás para navegar con seguridad.";
+            if (currentScenarioIndex >= SCENARIOS.length) {
+                endGame();
                 return;
             }
+
+            // Limpiar timers previos
+            if (currentTimer) clearInterval(currentTimer);
+
+            const scenario = SCENARIOS[currentScenarioIndex];
             
-            feedbackEl.innerHTML = "";
-            let s = scenarios[current];
-            scenarioEl.innerHTML = `<strong>Situación ${current + 1}:</strong> ${s.q}`;
-            optionsEl.innerHTML = "";
-            
-            s.options.forEach(opt => {
-                let btn = document.createElement("button");
-                btn.className = "btn";
-                btn.innerHTML = opt.text;
-                btn.onclick = () => checkAnswer(opt.safe, s.reason);
-                optionsEl.appendChild(btn);
+            // Actualizar textos
+            document.getElementById('level-indicator').textContent = `AMENAZA ${currentScenarioIndex + 1} / ${SCENARIOS.length}`;
+            document.getElementById('question-text').textContent = scenario.question;
+
+            // Inyectar mockup visual
+            const contextSim = document.getElementById('context-simulator');
+            contextSim.innerHTML = scenario.mockHTML;
+
+            // Si es la simulación de popup, iniciar temporizador visual dinámico
+            if (scenario.type === 'popup') {
+                let seconds = 119;
+                const timerVal = document.getElementById('timer');
+                currentTimer = setInterval(() => {
+                    seconds--;
+                    let mins = Math.floor(seconds / 60);
+                    let secs = seconds % 60;
+                    if (timerVal) {
+                        timerVal.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    }
+                    if (seconds <= 0) clearInterval(currentTimer);
+                }, 1000);
+            }
+
+            // Inyectar opciones de botones de respuesta
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            scenario.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 rounded-xl text-left text-xs md:text-sm text-slate-300 font-semibold transition duration-300 flex items-start gap-2 active:scale-[0.98]";
+                
+                // Prefijo de acción visual estética
+                const indexDot = document.createElement('span');
+                indexDot.className = "text-cyan-500 font-mono text-[11px] font-black";
+                indexDot.textContent = "[PROT]";
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = opt.text;
+
+                btn.appendChild(indexDot);
+                btn.appendChild(textSpan);
+
+                btn.onclick = () => submitAnswer(opt.secure);
+                optionsContainer.appendChild(btn);
             });
         }
 
-        function checkAnswer(safe, reason) {
-            // Deshabilitar botones temporalmente
-            const buttons = optionsEl.querySelectorAll('button');
-            buttons.forEach(b => b.disabled = true);
+        function submitAnswer(isSecure) {
+            const scenario = SCENARIOS[currentScenarioIndex];
+            
+            if (currentTimer) clearInterval(currentTimer);
 
-            if(safe) { 
-                score += 100; 
-                feedbackEl.innerHTML = `<span class='correct'>¡Decisión Segura!</span><br><br>${reason}`; 
-            } else { 
-                feedbackEl.innerHTML = `<span class='incorrect'>¡Alerta de Riesgo!</span><br><br>${reason}`; 
+            // Transición a feedback
+            gameplayScreen.classList.add('hidden');
+            feedbackScreen.classList.remove('hidden');
+
+            const badge = document.getElementById('feedback-status-badge');
+            const title = document.getElementById('feedback-title');
+            const desc = document.getElementById('feedback-desc');
+
+            if (isSecure) {
+                // Decisión correcta
+                sound.playCorrect();
+                triggerCelebration();
+
+                const pointsEarned = 100 * comboMultiplier;
+                score += pointsEarned;
+
+                badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold cyber-font mb-4 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                badge.innerHTML = "<span>🟢</span> PROTOCOLO EXITOSO";
+                title.textContent = `¡Excelente elección! (+${pointsEarned} Pts)`;
+                title.className = "text-lg md:text-xl font-black text-emerald-400 mb-3";
+
+                setBotExpression('happy');
+                botBubble.textContent = '"¡Increíble! Has neutralizado la amenaza de forma segura."';
+
+                comboMultiplier++;
+            } else {
+                // Decisión incorrecta
+                sound.playError();
+
+                shieldIntegrity -= 20;
+                if (shieldIntegrity < 0) shieldIntegrity = 0;
+
+                badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold cyber-font mb-4 bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                badge.innerHTML = "<span>🔴</span> BRECHA DE SEGURIDAD";
+                title.textContent = "Alerta: Decisión Insegura";
+                title.className = "text-lg md:text-xl font-black text-rose-500 mb-3";
+
+                setBotExpression('danger');
+                botBubble.textContent = '"¡Cuidado! El sistema ha sufrido una brecha de integridad."';
+
+                comboMultiplier = 1; // Reiniciar combo
             }
-            
-            scoreEl.innerHTML = score;
-            current++;
-            
-            // Esperar 4 segundos antes de pasar a la siguiente pregunta
-            setTimeout(loadScenario, 4000);
+
+            desc.textContent = scenario.reason;
+            updateHUD();
+
+            // Comprobar si el escudo cayó a cero (Derrota por brecha de seguridad)
+            if (shieldIntegrity <= 0) {
+                // Forzar pantalla de resultados tras breve pausa
+                const nextBtn = feedbackScreen.querySelector('button');
+                nextBtn.textContent = "Ver Informe de Fallo";
+                nextBtn.onclick = () => endGame(true);
+            } else {
+                const nextBtn = feedbackScreen.querySelector('button');
+                nextBtn.textContent = "Siguiente Amenaza";
+                nextBtn.onclick = nextLevel;
+            }
         }
 
-        // Iniciar el juego
-        loadScenario();
+        function nextLevel() {
+            currentScenarioIndex++;
+            feedbackScreen.classList.add('hidden');
+            gameplayScreen.classList.remove('hidden');
+            setBotExpression('neutral');
+            loadScenario();
+        }
+
+        function updateHUD() {
+            // Actualizar barra e indicador numérico
+            document.getElementById('score-val').textContent = score.toString().padStart(4, '0');
+            document.getElementById('shield-txt').textContent = `${shieldIntegrity}%`;
+            
+            const shieldBar = document.getElementById('shield-bar');
+            shieldBar.style.width = `${shieldIntegrity}%`;
+
+            // Cambiar gradiente de color del escudo por niveles de vida
+            if (shieldIntegrity > 50) {
+                shieldBar.className = "bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500";
+            } else if (shieldIntegrity > 20) {
+                shieldBar.className = "bg-gradient-to-r from-yellow-500 to-orange-500 h-full rounded-full transition-all duration-500";
+            } else {
+                shieldBar.className = "bg-gradient-to-r from-red-600 to-rose-500 h-full rounded-full transition-all duration-500";
+            }
+
+            // Combo indicador
+            document.getElementById('combo-indicator').textContent = `COMBO X${comboMultiplier}`;
+        }
+
+        function endGame(isDefeat = false) {
+            if (currentTimer) clearInterval(currentTimer);
+
+            feedbackScreen.classList.add('hidden');
+            gameplayScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            const trophy = document.getElementById('trophy-badge');
+            const resTitle = document.getElementById('results-title');
+            const ranking = document.getElementById('ranking-title');
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-shield').textContent = `${shieldIntegrity}%`;
+
+            if (isDefeat) {
+                sound.playError();
+                trophy.textContent = "💀";
+                resTitle.textContent = "ESCUDO COMPROMETIDO";
+                resTitle.className = "cyber-font text-xl md:text-2xl font-extrabold tracking-wide mb-2 text-rose-500";
+                ranking.textContent = "RANGO: RECLUTA INSEGURO";
+                ranking.className = "cyber-font text-rose-400 font-bold text-xs tracking-widest mb-6";
+                setBotExpression('danger');
+                botBubble.textContent = '"Sistemas apagados. Debemos estudiar más los protocolos de ciberdefensa."';
+            } else {
+                sound.playComplete();
+                
+                // Determinar el rango en base al puntaje e integridad
+                let rankText = "AGENTE INTERMEDIO";
+                let rankColorClass = "text-cyan-400";
+                
+                if (shieldIntegrity === 100 && score >= 500) {
+                    rankText = "GUARDIÁN DE ÉLITE (IMPERFECTIBLE)";
+                    rankColorClass = "text-emerald-400";
+                    trophy.textContent = "👑";
+                } else if (shieldIntegrity >= 60) {
+                    rankText = "ESPECIALISTA EN PATRULLA";
+                    rankColorClass = "text-blue-400";
+                    trophy.textContent = "🏆";
+                } else {
+                    rankText = "DEFENSOR CADETE";
+                    rankColorClass = "text-yellow-400";
+                    trophy.textContent = "🎖️";
+                }
+
+                resTitle.textContent = "ANÁLISIS DE PATRULLA COMPLETO";
+                resTitle.className = "cyber-font text-xl md:text-2xl font-extrabold tracking-wide mb-2 text-slate-100";
+                ranking.textContent = `RANGO: ${rankText}`;
+                ranking.className = `cyber-font font-bold text-xs tracking-widest mb-6 ${rankColorClass}`;
+
+                setBotExpression('happy');
+                botBubble.textContent = '"¡Misión completada de forma óptima! Eres un baluarte de la seguridad digital."';
+            }
+        }
     </script>
 </body>
 </html>
